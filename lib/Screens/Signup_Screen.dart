@@ -309,6 +309,44 @@ class _SignupScreenState extends State<SignupScreen> {
                   ],
                 ),
               ),
+
+              const SizedBox(height: 24),
+
+              // Login Link
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Already have an account? ',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: Colors.black54,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: isLoading
+                        ? null
+                        : () {
+                            Navigator.pushReplacementNamed(
+                              context,
+                              '/login',
+                            );
+                          },
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      'Log in',
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.pink.shade700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
