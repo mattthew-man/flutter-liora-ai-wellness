@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'cycle_algorithm.dart';
 import 'calendar_screen.dart';
 import 'shop_screen.dart';
 import 'profile_screen.dart';
+import 'first_time_setup.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,6 +19,8 @@ class _HomeScreenState extends State<HomeScreen> {
   int index = 0;
   DateTime focusedDay = DateTime.now();
   DateTime selectedDay = DateTime.now();
+  bool setupCompleted = false;
+  bool isCheckingSetup = true;
 
   final algo = CycleAlgorithm(
     lastPeriod: DateTime(2025, 1, 10),
@@ -24,7 +29,62 @@ class _HomeScreenState extends State<HomeScreen> {
   );
 
   @override
+  void initState() {
+    super.initState();
+    _checkIfFirstTimeSetup();
+  }
+
+  Future<void> _checkIfFirstTimeSetup() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final docSnapshot = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (mounted) {
+          setState(() {
+            setupCompleted = docSnapshot.data()?['setupCompleted'] ?? false;
+            isCheckingSetup = false;
+          });
+
+          // Show setup pop-up if first time
+          if (!setupCompleted && mounted) {
+            _showFirstTimeSetup();
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => isCheckingSetup = false);
+      }
+    }
+  }
+
+  void _showFirstTimeSetup() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => FirstTimeSetup(
+        onComplete: () {
+          setState(() => setupCompleted = true);
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (isCheckingSetup) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(color: Colors.pinkAccent),
+        ),
+      );
+    }
+
     final pages = [
       _homeUI(),
       const TrackerScreen(),
@@ -33,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF6F9), // soft pink background
+      backgroundColor: const Color(0xFFFDF6F9),
       body: pages[index],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: index,
